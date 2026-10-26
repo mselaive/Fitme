@@ -1,35 +1,38 @@
 @import "tailwindcss";
 
+/* Paleta: blanco y naranjo. */
 :root {
-  --bg: #f5f4f0;
-  --card: #ffffff;
-  --fg: #1a1a19;
-  --muted: #6f6e69;
-  --line: #e4e3df;
-  --accent: #ea580c;
+  --bg: #ffffff;
+  --card: #fff7f1;
+  --fg: #1c1512;
+  --muted: #7a6a62;
+  --line: #f4dfd2;
+  --accent: #ff5a1f;
+  --accent-2: #ff8a3d;
   --accent-fg: #ffffff;
-  --accent-soft: #fff1e8;
-  --ok: #047857;
-  --warn: #b45309;
-  --bad: #c2410c;
+  --accent-soft: #ffece2;
+  --ok: #0f8a5f;
+  --warn: #b86100;
+  --bad: #d7301c;
   --protein: #0e7490;
-  --carbs: #ca8a04;
+  --carbs: #b7791f;
   --fat: #be185d;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f0f0e;
-    --card: #1b1a19;
-    --fg: #f2f2ef;
-    --muted: #a3a29c;
-    --line: #2d2c2a;
-    --accent: #fb923c;
+    --bg: #120d0a;
+    --card: #1f1613;
+    --fg: #fbf3ee;
+    --muted: #b2a098;
+    --line: #35271f;
+    --accent: #ff6a2f;
+    --accent-2: #ff9a55;
     --accent-fg: #2a1200;
-    --accent-soft: #32200f;
-    --ok: #34d399;
-    --warn: #fbbf24;
-    --bad: #fb923c;
+    --accent-soft: #3a2015;
+    --ok: #3ddc97;
+    --warn: #ffb547;
+    --bad: #ff7a5c;
     --protein: #22d3ee;
     --carbs: #facc15;
     --fat: #f472b6;
@@ -43,6 +46,7 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
   --color-ok: var(--ok);
@@ -80,13 +84,14 @@ body {
     @apply w-full rounded-lg border border-line bg-bg px-2 py-2 text-center text-base tabular-nums outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3.5 text-base font-semibold text-accent-fg transition active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-base font-semibold text-accent-fg shadow-md shadow-accent/25 transition active:scale-[0.98] disabled:opacity-50;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent));
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-card px-4 py-3 text-base font-medium transition active:scale-[0.98] disabled:opacity-50;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted transition hover:bg-bg active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted transition hover:bg-accent-soft active:scale-[0.98] disabled:opacity-50;
   }
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-2 text-sm font-medium transition;
@@ -95,13 +100,19 @@ body {
     @apply border-accent bg-accent-soft text-accent;
   }
   .seg {
-    @apply grid rounded-xl bg-line/60 p-1 text-sm font-medium;
+    @apply grid rounded-xl bg-accent-soft p-1 text-sm font-medium;
   }
   .seg-item {
     @apply rounded-lg py-2 text-center transition text-muted;
   }
   .seg-on {
-    @apply bg-fg text-bg shadow-sm;
+    @apply bg-accent text-accent-fg shadow-sm;
+  }
+  /* Fondo degradado naranjo para cabeceras (login). */
+  .hero {
+    background:
+      radial-gradient(120% 90% at 10% 0%, rgba(255, 255, 255, 0.22), transparent 60%),
+      linear-gradient(160deg, var(--accent-2) 0%, var(--accent) 55%, #d93f0f 100%);
   }
 }
 

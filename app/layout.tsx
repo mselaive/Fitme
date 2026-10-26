@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: "FitMe",
   description: "Tu rutina de mancuernas, trotes y comidas con foto, en un solo lugar.",
   appleWebApp: { capable: true, title: "FitMe", statusBarStyle: "default" },
-  icons: { apple: "/icons/icon-192.png" },
   robots: { index: false, follow: false },
 };
 
@@ -20,8 +19,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f4f0" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f0f0e" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#120d0a" },
   ],
 };
 

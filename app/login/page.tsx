@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Camera, Dumbbell, Footprints, KeyRound, Lock, Mail, User } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { signIn, signUp, type AuthState } from "./actions";
 
@@ -14,69 +15,105 @@ export default function LoginPage() {
   const pending = isLogin ? loginPending : signupPending;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10">
-      <div className="mb-8 text-center">
-        <AppLogo className="mx-auto mb-4 size-16 shadow-lg" />
-        <h1 className="text-2xl font-bold">FitMe</h1>
-        <p className="mt-1 text-sm text-muted">Rutina, trotes y comidas, sin planillas</p>
-      </div>
+    <main className="min-h-dvh bg-bg">
+      {/* Cabecera naranja */}
+      <section className="hero relative overflow-hidden px-6 pt-[max(env(safe-area-inset-top),2.5rem)] pb-20 text-white">
+        <div className="pointer-events-none absolute -top-24 -right-20 size-72 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -bottom-32 -left-16 size-80 rounded-full bg-white/10" />
+        <div className="relative mx-auto max-w-md">
+          <div className="flex items-center gap-3">
+            <AppLogo className="size-14 shadow-xl ring-4 ring-white/20" />
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">FitMe</h1>
+              <p className="text-sm text-white/85">Tu rutina, tus trotes y tu comida</p>
+            </div>
+          </div>
+          <ul className="mt-6 flex flex-wrap gap-2 text-xs font-medium">
+            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
+              <Dumbbell className="size-3.5" /> Pesas con progresión
+            </li>
+            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
+              <Footprints className="size-3.5" /> Trotes
+            </li>
+            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
+              <Camera className="size-3.5" /> Calorías por foto
+            </li>
+          </ul>
+        </div>
+      </section>
 
-      <div className="seg mb-5 grid-cols-2">
-        {(["login", "signup"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={`seg-item ${mode === m ? "seg-on" : ""}`}
-          >
-            {m === "login" ? "Entrar" : "Crear cuenta"}
+      {/* Tarjeta del formulario, montada sobre la cabecera */}
+      <section className="relative mx-auto -mt-12 w-full max-w-md px-5 pb-10">
+        <div className="rounded-3xl border border-line bg-card p-5 shadow-xl shadow-accent/10">
+          <div className="seg mb-5 grid-cols-2">
+            {(["login", "signup"] as const).map((m) => (
+              <button key={m} type="button" onClick={() => setMode(m)} className={`seg-item ${mode === m ? "seg-on" : ""}`}>
+                {m === "login" ? "Entrar" : "Crear cuenta"}
+              </button>
+            ))}
+          </div>
+
+          <form action={isLogin ? loginAction : signupAction} className="space-y-3.5" key={mode}>
+            {!isLogin && (
+              <Field icon={<User className="size-5" />} label="Tu nombre">
+                <input name="name" className="input pl-11" placeholder="Matías" autoComplete="given-name" required />
+              </Field>
+            )}
+            <Field icon={<Mail className="size-5" />} label="Email">
+              <input
+                name="email"
+                type="email"
+                className="input pl-11"
+                placeholder="tu@email.com"
+                autoComplete="email"
+                inputMode="email"
+                required
+              />
+            </Field>
+            <Field icon={<Lock className="size-5" />} label="Contraseña">
+              <input
+                name="password"
+                type="password"
+                className="input pl-11"
+                placeholder="••••••••"
+                autoComplete={isLogin ? "current-password" : "new-password"}
+                minLength={6}
+                required
+              />
+            </Field>
+            {!isLogin && (
+              <Field icon={<KeyRound className="size-5" />} label="Código de invitación">
+                <input name="code" className="input pl-11" placeholder="El de tu .env" autoCapitalize="off" required />
+              </Field>
+            )}
+
+            {state.error && <p className="rounded-xl bg-bad/10 px-3 py-2 text-sm text-bad">{state.error}</p>}
+
+            <button type="submit" className="btn-primary mt-1 w-full" disabled={pending}>
+              {pending ? "Un momento…" : isLogin ? "Entrar" : "Crear cuenta"}
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-5 text-center text-xs text-muted">
+          {isLogin ? "¿Primera vez? " : "¿Ya tienes cuenta? "}
+          <button type="button" className="font-semibold text-accent" onClick={() => setMode(isLogin ? "signup" : "login")}>
+            {isLogin ? "Crea tu cuenta con el código" : "Entra aquí"}
           </button>
-        ))}
-      </div>
-
-      <form action={isLogin ? loginAction : signupAction} className="card space-y-4 p-5" key={mode}>
-        {!isLogin && (
-          <label className="block">
-            <span className="label">Tu nombre</span>
-            <input name="name" className="input" placeholder="Matías" autoComplete="given-name" required />
-          </label>
-        )}
-        <label className="block">
-          <span className="label">Email</span>
-          <input
-            name="email"
-            type="email"
-            className="input"
-            placeholder="tu@email.com"
-            autoComplete="email"
-            inputMode="email"
-            required
-          />
-        </label>
-        <label className="block">
-          <span className="label">Contraseña</span>
-          <input
-            name="password"
-            type="password"
-            className="input"
-            autoComplete={isLogin ? "current-password" : "new-password"}
-            minLength={6}
-            required
-          />
-        </label>
-        {!isLogin && (
-          <label className="block">
-            <span className="label">Código de invitación</span>
-            <input name="code" className="input" placeholder="El de tu .env" autoCapitalize="off" required />
-          </label>
-        )}
-
-        {state.error && <p className="rounded-lg bg-bad/10 px-3 py-2 text-sm text-bad">{state.error}</p>}
-
-        <button type="submit" className="btn-primary w-full" disabled={pending}>
-          {pending ? "Un momento…" : isLogin ? "Entrar" : "Crear cuenta"}
-        </button>
-      </form>
+        </p>
+      </section>
     </main>
+  );
+}
+
+function Field({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="label">{label}</span>
+      <span className="relative block">
+        <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-muted">{icon}</span>
+        {children}
+      </span>
+    </label>
   );
 }
