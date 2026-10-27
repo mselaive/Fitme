@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Camera, Dumbbell, Footprints, KeyRound, Lock, Mail, User } from "lucide-react";
+import { KeyRound, Lock, Mail, User } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { signIn, signUp, type AuthState } from "./actions";
 
@@ -17,28 +17,11 @@ export default function LoginPage() {
   return (
     <main className="min-h-dvh bg-bg">
       {/* Cabecera naranja */}
-      <section className="hero relative overflow-hidden px-6 pt-[max(env(safe-area-inset-top),2.5rem)] pb-20 text-white">
-        <div className="pointer-events-none absolute -top-24 -right-20 size-72 rounded-full bg-white/10" />
-        <div className="pointer-events-none absolute -bottom-32 -left-16 size-80 rounded-full bg-white/10" />
+      <section className="hero relative overflow-hidden px-6 pt-[max(env(safe-area-inset-top),3rem)] pb-16 text-white">
         <div className="relative mx-auto max-w-md">
-          <div className="flex items-center gap-3">
-            <AppLogo className="size-14 shadow-xl ring-4 ring-white/20" />
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-tight">FitMe</h1>
-              <p className="text-sm text-white/85">Tu rutina, tus trotes y tu comida</p>
-            </div>
-          </div>
-          <ul className="mt-6 flex flex-wrap gap-2 text-xs font-medium">
-            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
-              <Dumbbell className="size-3.5" /> Pesas con progresión
-            </li>
-            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
-              <Footprints className="size-3.5" /> Trotes
-            </li>
-            <li className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
-              <Camera className="size-3.5" /> Calorías por foto
-            </li>
-          </ul>
+          <AppLogo className="size-16 shadow-xl" />
+          <h1 className="mt-5 text-4xl font-extrabold tracking-tight">FitMe</h1>
+          <p className="mt-1 text-base text-white/85">Entrena, trota y come mejor.</p>
         </div>
       </section>
 
