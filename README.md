@@ -99,7 +99,9 @@ Checklist antes del primer deploy:
 
 - **Hoy**: calorías comidas vs. meta, qué día de la rutina te toca, trote y peso del día, resumen de la semana.
 - **Entrenar → Rutina**: elige el día. En cada ejercicio escribe kg y reps y toca ✓; si dejas la serie vacía,
-  se copia lo de la última vez. Al marcar arranca un descanso de 90 s. "Terminar entrenamiento" cierra la sesión.
+  se copia lo de la última vez. Al marcar arranca un descanso de 90 s. En los ejercicios por pierna o por brazo el ✓
+  va en dos toques: el primero marca un lado y da 20 s para cambiar, el segundo cierra la serie. "Terminar
+  entrenamiento" cierra la sesión. Tocando la fecha de la cabecera puedes mover la sesión a otro día.
 - **Entrenar → Trote**: distancia y tiempo; el ritmo y las calorías (≈1 kcal por kg por km) salen solos.
 - **Comida**: "Sacar foto" o "Galería" → Gemini estima; corrige porciones (los gramos escalan los macros) y guarda.
   "A mano" para totales directos o para describir la comida con texto y estimarla.

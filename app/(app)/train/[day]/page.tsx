@@ -25,6 +25,8 @@ type Row = {
 };
 
 const REST_SECONDS = 90;
+// Descanso corto entre un lado y el otro en los ejercicios unilaterales.
+const SIDE_REST_SECONDS = 20;
 
 export default function SessionPage() {
   const params = useParams<{ day: string }>();
@@ -41,6 +43,9 @@ export default function SessionPage() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
   const [rest, setRest] = useState<number | null>(null);
+  const [restLabel, setRestLabel] = useState("Descanso");
+  /** Series unilaterales con el primer lado ya hecho (clave: ejercicio:serie). */
+  const [halfDone, setHalfDone] = useState<Record<string, boolean>>({});
   const [howTo, setHowTo] = useState<Exercise | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const creating = useRef<Promise<Workout> | null>(null);
@@ -165,8 +170,26 @@ export default function SessionPage() {
     }));
   }
 
-  /** Marca la serie como hecha; si está vacía, copia lo de la última vez. */
+  function startRest(seconds: number, label: string) {
+    setRestLabel(label);
+    setRest(seconds);
+  }
+
+  /**
+   * Marca la serie como hecha; si está vacía, copia lo de la última vez.
+   * En ejercicios por lado, el primer toque marca un lado (descanso corto) y el segundo cierra la serie.
+   */
   function toggleDone(exercise: Exercise, row: Row) {
+    const halfKey = `${exercise.key}:${row.set_no}`;
+    if (row.done) {
+      setHalfDone((h) => ({ ...h, [halfKey]: false }));
+    } else if (exercise.perSide && !halfDone[halfKey]) {
+      setHalfDone((h) => ({ ...h, [halfKey]: true }));
+      startRest(SIDE_REST_SECONDS, "Cambia de lado");
+      return;
+    } else if (exercise.perSide) {
+      setHalfDone((h) => ({ ...h, [halfKey]: false }));
+    }
     const prevSet = previous.get(exercise.key)?.[row.set_no - 1] ?? previous.get(exercise.key)?.at(-1);
     const next: Row = { ...row, done: !row.done };
     if (next.done) {
@@ -178,7 +201,7 @@ export default function SessionPage() {
         toast(exercise.unit === "reps" ? "Escribe las repeticiones" : "Escribe los segundos", "bad");
         return;
       }
-      setRest(REST_SECONDS);
+      startRest(REST_SECONDS, "Descanso");
     }
     update(exercise, row.set_no, next);
     saveRow(exercise, next);
@@ -409,13 +432,17 @@ export default function SessionPage() {
                         )}
                         <button
                           type="button"
-                          aria-label={row.done ? "Desmarcar serie" : "Serie hecha"}
+                          aria-label={row.done ? "Desmarcar serie" : halfDone[`${exercise.key}:${row.set_no}`] ? "Segundo lado hecho" : exercise.perSide ? "Primer lado hecho" : "Serie hecha"}
                           onClick={() => toggleDone(exercise, row)}
-                          className={`flex h-10 items-center justify-center rounded-lg border transition active:scale-95 ${
-                            row.done ? "border-ok bg-ok text-white" : "border-line bg-card text-muted"
+                          className={`flex h-10 items-center justify-center rounded-lg border text-xs font-bold transition active:scale-95 ${
+                            row.done
+                              ? "border-ok bg-ok text-white"
+                              : halfDone[`${exercise.key}:${row.set_no}`]
+                                ? "border-accent bg-accent-soft text-accent"
+                                : "border-line bg-card text-muted"
                           }`}
                         >
-                          <Check className="size-5" strokeWidth={3} />
+                          {!row.done && halfDone[`${exercise.key}:${row.set_no}`] ? "2.º" : <Check className="size-5" strokeWidth={3} />}
                         </button>
                         <button
                           type="button"
@@ -467,7 +494,7 @@ export default function SessionPage() {
         <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 mx-auto flex w-[calc(100%-2rem)] max-w-lg items-center gap-3 rounded-2xl bg-fg px-4 py-3 text-bg shadow-xl">
           <Timer className="size-5" />
           <div className="flex-1">
-            <p className="text-xs opacity-70">Descanso</p>
+            <p className="text-xs opacity-70">{restLabel}</p>
             <p className="text-lg font-bold tabular-nums leading-tight">{fmtDuration(rest)}</p>
           </div>
           <button className="rounded-lg px-2 py-1 text-sm font-medium opacity-80" onClick={() => setRest((r) => (r ?? 0) + 30)}>
