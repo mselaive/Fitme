@@ -163,11 +163,29 @@ export default function SessionPage() {
     [ensureWorkout, supabase, userId, toast],
   );
 
+  /**
+   * Actualiza una serie. Si cambias kg, reps o segundos, el valor se copia a las series de abajo
+   * que no estén hechas y que venían "siguiendo" a esta (vacías o con el mismo valor anterior).
+   */
   function update(exercise: Exercise, setNo: number, patch: Partial<Row>) {
-    setRows((r) => ({
-      ...r,
-      [exercise.key]: r[exercise.key].map((x) => (x.set_no === setNo ? { ...x, ...patch } : x)),
-    }));
+    setRows((r) => {
+      const list = r[exercise.key];
+      const current = list.find((x) => x.set_no === setNo);
+      if (!current) return r;
+      const fields = (["weight", "reps", "seconds"] as const).filter((f) => patch[f] !== undefined);
+      return {
+        ...r,
+        [exercise.key]: list.map((x) => {
+          if (x.set_no === setNo) return { ...x, ...patch };
+          if (x.set_no < setNo || x.done) return x;
+          const next = { ...x };
+          for (const f of fields) {
+            if (x[f] === current[f]) next[f] = patch[f] as string;
+          }
+          return next;
+        }),
+      };
+    });
   }
 
   function startRest(seconds: number, label: string) {
