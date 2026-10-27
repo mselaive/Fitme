@@ -19,8 +19,12 @@
   --fat: #be185d;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+/* Tema: claro por defecto. "Oscuro" o "Sistema" se eligen en Ajustes (data-theme en <html>). */
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
     --bg: #120d0a;
     --card: #1f1613;
     --fg: #fbf3ee;
@@ -36,6 +40,27 @@
     --protein: #22d3ee;
     --carbs: #facc15;
     --fat: #f472b6;
+    color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+      --bg: #120d0a;
+      --card: #1f1613;
+      --fg: #fbf3ee;
+      --muted: #b2a098;
+      --line: #35271f;
+      --accent: #ff6a2f;
+      --accent-2: #ff9a55;
+      --accent-fg: #2a1200;
+      --accent-soft: #3a2015;
+      --ok: #3ddc97;
+      --warn: #ffb547;
+      --bad: #ff7a5c;
+      --protein: #22d3ee;
+      --carbs: #facc15;
+      --fat: #f472b6;
+      color-scheme: dark;
   }
 }
 

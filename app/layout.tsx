@@ -18,15 +18,18 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#120d0a" },
-  ],
+  themeColor: "#ffffff",
 };
+
+// Aplica el tema guardado antes de pintar, para que no parpadee.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("fitme:theme");if(t==="dark"||t==="system"){document.documentElement.dataset.theme=t}}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="es" className={`${geistSans.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

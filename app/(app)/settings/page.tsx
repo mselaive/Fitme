@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Download, LogOut, Share, Smartphone } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Download, LogOut, Palette, Share, Smartphone } from "lucide-react";
 import { useApp } from "@/components/app-provider";
 import { WeightSheet } from "@/components/weight-sheet";
 import { signOut } from "@/app/login/actions";
 import { fmtKg, fmtNum, fmtRelative } from "@/lib/format";
 import { ageFromBirthDate, bmi, bmiLabel, targetsFor } from "@/lib/nutrition";
+import { applyTheme, getTheme, THEMES, type Theme } from "@/lib/theme";
 import { ACTIVITIES, GOALS, type Profile } from "@/lib/types";
 
 export default function SettingsPage() {
@@ -16,6 +17,8 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [weightSheet, setWeightSheet] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [theme, setTheme] = useState<Theme>("light");
+  useEffect(() => setTheme(getTheme()), []);
 
   const preview = targetsFor({ ...form, calorie_target: custom ? form.calorie_target : null, protein_target_g: custom ? form.protein_target_g : null }, weightKg);
   const age = ageFromBirthDate(form.birth_date);
@@ -170,6 +173,27 @@ export default function SettingsPage() {
       <button className="btn-primary w-full" onClick={save} disabled={!dirty || saving}>
         {saving ? "Guardando…" : "Guardar perfil"}
       </button>
+
+      <section className="card space-y-3 p-4">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Palette className="size-4" /> Apariencia
+        </h2>
+        <div className="seg grid-cols-3">
+          {THEMES.map((t) => (
+            <button
+              key={t.value}
+              className={`seg-item ${theme === t.value ? "seg-on" : ""}`}
+              onClick={() => {
+                setTheme(t.value);
+                applyTheme(t.value);
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted">«Sistema» sigue el modo claro u oscuro del celular.</p>
+      </section>
 
       <section className="card space-y-3 p-4">
         <h2 className="flex items-center gap-2 font-semibold">
