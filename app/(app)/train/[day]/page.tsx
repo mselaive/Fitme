@@ -215,6 +215,14 @@ export default function SessionPage() {
     }
   }
 
+  async function changeDate(date: string) {
+    if (!workout || !date || date === workout.date) return;
+    const { error } = await supabase.from("workouts").update({ date }).eq("id", workout.id);
+    if (error) return toast(`No se pudo cambiar la fecha: ${error.message}`, "bad");
+    setWorkout({ ...workout, date });
+    toast(`Sesión movida al ${fmtDay(date)}`);
+  }
+
   async function saveNotes() {
     if (!workout || (workout.notes ?? "") === notes.trim()) return;
     await supabase.from("workouts").update({ notes: notes.trim() || null }).eq("id", workout.id);
@@ -257,8 +265,23 @@ export default function SessionPage() {
           <ArrowLeft className="size-5" />
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-muted">
-            {day.label} · {workout ? fmtDay(workout.date) : "hoy"}
+          <p className="flex items-center gap-1 text-sm text-muted">
+            {day.label} ·{" "}
+            {workout ? (
+              <label className="relative inline-flex cursor-pointer items-center gap-1 underline decoration-dotted underline-offset-4">
+                {fmtDay(workout.date)}
+                <input
+                  type="date"
+                  aria-label="Cambiar la fecha de la sesión"
+                  className="absolute inset-0 w-full cursor-pointer opacity-0"
+                  value={workout.date}
+                  max={today}
+                  onChange={(e) => changeDate(e.target.value)}
+                />
+              </label>
+            ) : (
+              "hoy"
+            )}
           </p>
           <h1 className="text-xl font-bold leading-tight">{day.title}</h1>
         </div>
