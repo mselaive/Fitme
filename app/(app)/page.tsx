@@ -114,8 +114,8 @@ export default function TodayPage() {
               </Link>
             )}
             <MacroBar label="Proteína" value={protein} max={targets.protein_g} color="var(--protein)" />
-            <MacroBar label="Carbohidratos" value={carbs} max={null} color="var(--carbs)" />
-            <MacroBar label="Grasa" value={fat} max={null} color="var(--fat)" />
+            <MacroBar label="Carbohidratos" value={carbs} max={targets.carbs_g} color="var(--carbs)" />
+            <MacroBar label="Grasa" value={fat} max={targets.fat_g} color="var(--fat)" />
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-sm">

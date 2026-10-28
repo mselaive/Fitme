@@ -25,6 +25,10 @@ export type Targets = {
   calories: number | null;
   /** Meta de proteína en gramos (la del perfil o 1,8 g por kg). */
   protein_g: number | null;
+  /** Grasa: ≈28 % de las calorías de la meta. */
+  fat_g: number | null;
+  /** Carbohidratos: las calorías que quedan tras proteína y grasa. */
+  carbs_g: number | null;
   /** true si la meta de calorías viene calculada (no editada a mano). */
   calculated: boolean;
 };
@@ -36,11 +40,17 @@ export function targetsFor(profile: Profile, weightKg: number | null): Targets {
   const tdee = basal ? Math.round(basal * factor) : null;
   const calculated = tdee ? Math.max(1200, tdee + delta) : null;
   const protein = weightKg ? Math.round(weightKg * 1.8) : null;
+  const calories = profile.calorie_target ?? calculated;
+  const proteinG = profile.protein_target_g ?? protein;
+  const fatG = calories ? Math.round((calories * 0.28) / 9) : null;
+  const carbsG = calories && fatG != null ? Math.max(50, Math.round((calories - (proteinG ?? 0) * 4 - fatG * 9) / 4)) : null;
   return {
     bmr: basal,
     tdee,
-    calories: profile.calorie_target ?? calculated,
-    protein_g: profile.protein_target_g ?? protein,
+    calories,
+    protein_g: proteinG,
+    fat_g: fatG,
+    carbs_g: carbsG,
     calculated: profile.calorie_target == null,
   };
 }

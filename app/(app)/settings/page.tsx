@@ -167,7 +167,12 @@ export default function SettingsPage() {
             </label>
           </div>
         )}
-        {!custom && preview.protein_g && <p className="text-xs text-muted">Proteína sugerida: {preview.protein_g} g por día (1,8 g por kg).</p>}
+        {preview.calories && (
+          <p className="text-xs text-muted">
+            Reparto sugerido: proteína {preview.protein_g ?? "?"} g{custom ? "" : " (1,8 g por kg)"} · carbohidratos {preview.carbs_g ?? "?"} g · grasa{" "}
+            {preview.fat_g ?? "?"} g.
+          </p>
+        )}
       </section>
 
       <button className="btn-primary w-full" onClick={save} disabled={!dirty || saving}>

@@ -106,8 +106,8 @@ export default function FoodPage() {
         </div>
         <div className="space-y-2">
           <MacroBar label="Proteína" value={totals.protein_g} max={targets.protein_g} color="var(--protein)" />
-          <MacroBar label="Carbohidratos" value={totals.carbs_g} max={null} color="var(--carbs)" />
-          <MacroBar label="Grasa" value={totals.fat_g} max={null} color="var(--fat)" />
+          <MacroBar label="Carbohidratos" value={totals.carbs_g} max={targets.carbs_g} color="var(--carbs)" />
+          <MacroBar label="Grasa" value={totals.fat_g} max={targets.fat_g} color="var(--fat)" />
         </div>
       </section>
 
