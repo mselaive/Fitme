@@ -33,7 +33,9 @@ create table if not exists public.workouts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
   date date not null,
-  day_key text not null,          -- d1..d5 (rutina) o 'libre'
+  day_key text not null,          -- d1..d5 (rutina), 'libre' o 'descanso'
+  -- 'sesion' normal, 'descanso' (día libre anotado) u 'omitido' (día de la rutina que se saltó)
+  kind text not null default 'sesion' check (kind in ('sesion', 'descanso', 'omitido')),
   title text not null default '',
   notes text,
   started_at timestamptz not null default now(),
@@ -85,6 +87,11 @@ create table if not exists public.meals (
   source text not null default 'manual' check (source in ('foto', 'manual')),
   created_at timestamptz not null default now()
 );
+
+-- Columna agregada después del primer esquema (no falla si ya existe).
+alter table public.workouts
+  add column if not exists kind text not null default 'sesion'
+  check (kind in ('sesion', 'descanso', 'omitido'));
 
 create index if not exists weight_logs_user_date on public.weight_logs (user_id, date desc);
 create index if not exists workouts_user_date on public.workouts (user_id, date desc);

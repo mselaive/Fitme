@@ -72,8 +72,13 @@ export async function buildCoachContext(supabase: SupabaseClient, userId: string
       : "Sin registros de peso.",
   );
 
-  lines.push(`Sesiones de pesas (últimos 14 días): ${workouts.length}.`);
-  for (const w of [...workouts].reverse()) {
+  const sessions = workouts.filter((w) => w.kind === "sesion");
+  const rests = workouts.filter((w) => w.kind === "descanso");
+  const skipped = workouts.filter((w) => w.kind === "omitido");
+  lines.push(`Sesiones de pesas (últimos 14 días): ${sessions.length}.`);
+  if (rests.length) lines.push(`Días de descanso anotados: ${rests.map((w) => w.date).join(", ")}.`);
+  if (skipped.length) lines.push(`Días de la rutina que se saltó: ${skipped.map((w) => `${w.date} (${w.title})`).join(", ")}.`);
+  for (const w of [...sessions].reverse()) {
     const mine = sets.filter((s) => s.workout_id === w.id && s.done);
     const byExercise = new Map<string, typeof mine>();
     for (const s of mine) byExercise.set(s.exercise_name, [...(byExercise.get(s.exercise_name) ?? []), s]);

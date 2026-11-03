@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Footprints, Scale } from "lucide-react";
+import { ChevronLeft, ChevronRight, Footprints, Moon, Scale } from "lucide-react";
 import { useApp } from "@/components/app-provider";
 import { LineChart } from "@/components/charts";
 import { CoachCard } from "@/components/coach-card";
@@ -146,7 +146,10 @@ export default function ProgressPage() {
           ))}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const iso = `${month.y}-${String(month.m + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`;
-            const w = data?.workouts.filter((x) => x.date === iso) ?? [];
+            const dayRows = data?.workouts.filter((x) => x.date === iso) ?? [];
+            const w = dayRows.filter((x) => x.kind === "sesion");
+            const rest = dayRows.some((x) => x.kind === "descanso");
+            const skipped = dayRows.filter((x) => x.kind === "omitido");
             const r = data?.runs.some((x) => x.date === iso);
             const kcal = calByDay.get(iso) ?? 0;
             const future = iso > today;
@@ -167,6 +170,12 @@ export default function ProgressPage() {
                       {dayByKey(x.day_key)?.label.replace("Día ", "") ?? "·"}
                     </span>
                   ))}
+                  {skipped.map((x) => (
+                    <span key={x.id} className="rounded-full bg-line px-1 text-[8px] font-bold leading-3 text-muted line-through">
+                      {dayByKey(x.day_key)?.label.replace("Día ", "") ?? "·"}
+                    </span>
+                  ))}
+                  {rest && <Moon className="size-2.5 text-muted" />}
                   {r && <Footprints className="size-2.5 text-ok" />}
                 </span>
                 {kcal > 0 && <span className={`size-1.5 rounded-full ${over ? "bg-bad" : "bg-ok"}`} />}
@@ -176,7 +185,7 @@ export default function ProgressPage() {
         </div>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-line pt-3 text-xs text-muted">
           <span>
-            <b className="text-fg">{data?.workouts.length ?? 0}</b> sesiones de pesas
+            <b className="text-fg">{data?.workouts.filter((x) => x.kind === "sesion").length ?? 0}</b> sesiones de pesas
           </span>
           <span>
             <b className="text-fg">{data?.runs.length ?? 0}</b> trotes · {fmtNum(monthKm, 1)} km
@@ -233,7 +242,7 @@ export default function ProgressPage() {
       {selectedDay && data && (
         <DaySheet
           date={selectedDay}
-          workouts={data.workouts.filter((w) => w.date === selectedDay)}
+          workouts={data.workouts.filter((w) => w.date === selectedDay && w.kind === "sesion")}
           runs={data.runs.filter((r) => r.date === selectedDay)}
           meals={data.meals.filter((m) => m.date === selectedDay)}
           onClose={() => setSelectedDay(null)}

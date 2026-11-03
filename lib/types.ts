@@ -16,10 +16,14 @@ export type Profile = {
 
 export type WeightLog = { id: string; date: string; weight_kg: number };
 
+export type WorkoutKind = "sesion" | "descanso" | "omitido";
+
 export type Workout = {
   id: string;
   date: string;
   day_key: string;
+  /** Sesión normal, día de descanso anotado o día de la rutina omitido. */
+  kind: WorkoutKind;
   title: string;
   notes: string | null;
   started_at: string;

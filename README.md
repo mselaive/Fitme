@@ -86,6 +86,13 @@ Checklist antes del primer deploy:
 - [ ] Key de Gemini creada (sección 2).
 - [ ] `INVITE_CODE` elegido (es lo único que impide que otro se registre).
 
+## 4b. Cuando cambia la base de datos
+
+Si ya tenías el proyecto creado y una versión nueva trae cambios de base, ejecuta en **SQL Editor** el archivo nuevo
+de `supabase/migrations/` (o vuelve a pegar `supabase/schema.sql` completo: es seguro repetirlo). Cambios hasta ahora:
+
+- `20261103000000_workout_kind.sql`: columna `kind` en `workouts` para anotar días de descanso y días omitidos.
+
 ## 5. Primer uso
 
 1. Entra a la URL → **Crear cuenta** (nombre, email, contraseña y el código de invitación).
@@ -97,7 +104,8 @@ Checklist antes del primer deploy:
 
 ## Cómo se usa
 
-- **Hoy**: calorías comidas vs. meta, qué día de la rutina te toca, trote y peso del día, resumen de la semana.
+- **Hoy**: calorías comidas vs. meta, qué día de la rutina te toca (con botones para saltarlo o anotar descanso),
+  trote y peso del día, resumen de la semana.
 - **Entrenar → Rutina**: elige el día. En cada ejercicio escribe kg y reps y toca ✓; si dejas la serie vacía,
   se copia lo de la última vez. Al marcar arranca un descanso de 90 s. En los ejercicios por pierna o por brazo el ✓
   va en dos toques: el primero marca un lado y da 20 s para cambiar, el segundo cierra la serie. "Terminar

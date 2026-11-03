@@ -127,6 +127,7 @@ export const ROUTINE: RoutineDay[] = [
 ];
 
 export const FREE_DAY_KEY = "libre";
+export const REST_DAY_KEY = "descanso";
 
 export function dayByKey(key: string) {
   return ROUTINE.find((d) => d.key === key) ?? null;
@@ -146,4 +147,13 @@ export function nextDayKey(lastKey: string | null) {
   const i = order.indexOf(lastKey);
   if (i < 0) return "d1";
   return order[(i + 1) % order.length];
+}
+
+/**
+ * Qué día toca según el historial (de más nuevo a más antiguo): se toma el último registro que
+ * fue una sesión o un día omitido; los días de descanso no cambian el turno.
+ */
+export function nextDayFromHistory(workouts: { day_key: string; kind: string }[]) {
+  const last = workouts.find((w) => w.kind !== "descanso");
+  return nextDayKey(last?.day_key ?? null);
 }

@@ -33,6 +33,11 @@ export function normalizeMeal(m: Record<string, unknown>): Meal {
   };
 }
 
+/** Si la columna `kind` aún no existe en la base (migración pendiente), se asume sesión normal. */
+export function normalizeWorkout(w: Record<string, unknown>): Workout {
+  return { ...(w as Workout), kind: (w.kind as Workout["kind"]) ?? "sesion" };
+}
+
 export function normalizeRun(r: Record<string, unknown>): Run {
   return { ...(r as Run), distance_km: Number(r.distance_km) };
 }
@@ -61,24 +66,24 @@ export async function fetchWeights(supabase: SupabaseClient, limit = 400) {
 export async function fetchWorkouts(supabase: SupabaseClient, from: string, to: string) {
   const { data, error } = await supabase
     .from("workouts")
-    .select("id, date, day_key, title, notes, started_at, finished_at")
+    .select("*")
     .gte("date", from)
     .lte("date", to)
     .order("date", { ascending: false })
     .order("started_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Workout[];
+  return (data ?? []).map(normalizeWorkout);
 }
 
 export async function fetchRecentWorkouts(supabase: SupabaseClient, limit = 20) {
   const { data, error } = await supabase
     .from("workouts")
-    .select("id, date, day_key, title, notes, started_at, finished_at")
+    .select("*")
     .order("date", { ascending: false })
     .order("started_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data ?? []) as Workout[];
+  return (data ?? []).map(normalizeWorkout);
 }
 
 export async function fetchSetsForWorkouts(supabase: SupabaseClient, workoutIds: string[]) {

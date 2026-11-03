@@ -8,7 +8,7 @@ import { useApp } from "@/components/app-provider";
 import { ExerciseFigure } from "@/components/exercise-figure";
 import { ExerciseSheet } from "@/components/exercise-sheet";
 import { exerciseInfo } from "@/lib/exercise-info";
-import { fetchPreviousSets, fetchSetsForWorkouts, fetchWorkouts, normalizeSet } from "@/lib/data";
+import { fetchPreviousSets, fetchSetsForWorkouts, fetchWorkouts, normalizeSet, normalizeWorkout } from "@/lib/data";
 import { fmtDay, fmtDuration, fmtNum } from "@/lib/format";
 import { dayByKey, type Exercise } from "@/lib/routine";
 import { suggestProgression } from "@/lib/progression";
@@ -42,7 +42,8 @@ export default function SessionPage() {
   const [bestEver, setBestEver] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
-  const [rest, setRest] = useState<number | null>(null);
+  /** Hora (ms) en que termina el descanso; se calcula con el reloj para que siga corriendo en segundo plano. */
+  const [restEnd, setRestEnd] = useState<number | null>(null);
   const [restLabel, setRestLabel] = useState("Descanso");
   /** Series unilaterales con el primer lado ya hecho (clave: ejercicio:serie). */
   const [halfDone, setHalfDone] = useState<Record<string, boolean>>({});
@@ -59,10 +60,10 @@ export default function SessionPage() {
         let w: Workout | null = null;
         if (workoutIdParam) {
           const { data } = await supabase.from("workouts").select("*").eq("id", workoutIdParam).maybeSingle();
-          w = (data as Workout | null) ?? null;
+          w = data ? normalizeWorkout(data) : null;
         } else {
           const todays = await fetchWorkouts(supabase, today, today);
-          w = todays.find((x) => x.day_key === day.key) ?? null;
+          w = todays.find((x) => x.day_key === day.key && x.kind === "sesion") ?? null;
         }
         const keys = day.exercises.map((e) => e.key);
         const [sets, prev] = await Promise.all([
@@ -94,22 +95,29 @@ export default function SessionPage() {
     };
   }, [day, workoutIdParam, supabase, today, toast]);
 
-  // Reloj de la sesión y del descanso.
+  // Reloj de la sesión y del descanso. Se actualiza también al volver a la app,
+  // porque el celular pausa los intervalos en segundo plano.
   useEffect(() => {
-    const id = setInterval(() => {
-      setNow(Date.now());
-      setRest((r) => {
-        if (r == null) return r;
-        if (r <= 1) {
-          // Aviso al terminar el descanso (Android; iOS no vibra desde el navegador).
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.([200, 100, 200]);
-          return null;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
+    const tick = () => setNow(Date.now());
+    const id = setInterval(tick, 1000);
+    const onVisible = () => document.visibilityState === "visible" && tick();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", tick);
+    };
   }, []);
+
+  const rest = restEnd != null ? Math.max(0, Math.ceil((restEnd - now) / 1000)) : null;
+
+  // Al terminar el descanso: aviso (Android; iOS no vibra desde el navegador) y se oculta la barra.
+  useEffect(() => {
+    if (restEnd == null || rest == null || rest > 0) return;
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.([200, 100, 200]);
+    setRestEnd(null);
+  }, [rest, restEnd]);
 
   const ensureWorkout = useCallback(async (): Promise<Workout> => {
     if (workout) return workout;
@@ -190,7 +198,8 @@ export default function SessionPage() {
 
   function startRest(seconds: number, label: string) {
     setRestLabel(label);
-    setRest(seconds);
+    setNow(Date.now());
+    setRestEnd(Date.now() + seconds * 1000);
   }
 
   /**
@@ -515,10 +524,10 @@ export default function SessionPage() {
             <p className="text-xs opacity-70">{restLabel}</p>
             <p className="text-lg font-bold tabular-nums leading-tight">{fmtDuration(rest)}</p>
           </div>
-          <button className="rounded-lg px-2 py-1 text-sm font-medium opacity-80" onClick={() => setRest((r) => (r ?? 0) + 30)}>
+          <button className="rounded-lg px-2 py-1 text-sm font-medium opacity-80" onClick={() => setRestEnd((e) => (e ?? Date.now()) + 30_000)}>
             +30 s
           </button>
-          <button className="rounded-full p-1.5 opacity-80" aria-label="Saltar descanso" onClick={() => setRest(null)}>
+          <button className="rounded-full p-1.5 opacity-80" aria-label="Saltar descanso" onClick={() => setRestEnd(null)}>
             <X className="size-5" />
           </button>
         </div>

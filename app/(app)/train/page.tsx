@@ -9,7 +9,7 @@ import { RunSheet } from "@/components/run-sheet";
 import { fetchRecentRuns, fetchRecentWorkouts } from "@/lib/data";
 import { addDays, fmtDay, fmtDuration, fmtNum, fmtPace, fmtRelative, parseIso } from "@/lib/format";
 import { runCalories } from "@/lib/nutrition";
-import { nextDayKey, ROUTINE } from "@/lib/routine";
+import { nextDayFromHistory, ROUTINE } from "@/lib/routine";
 import type { Run, Workout } from "@/lib/types";
 
 export default function TrainPage() {
@@ -35,11 +35,11 @@ export default function TrainPage() {
 
   const lastByDay = useMemo(() => {
     const map = new Map<string, Workout>();
-    for (const w of workouts ?? []) if (!map.has(w.day_key)) map.set(w.day_key, w);
+    for (const w of workouts ?? []) if (w.kind === "sesion" && !map.has(w.day_key)) map.set(w.day_key, w);
     return map;
   }, [workouts]);
-  const inProgress = workouts?.find((w) => w.date === today && !w.finished_at) ?? null;
-  const suggested = nextDayKey(workouts?.[0]?.day_key ?? null);
+  const inProgress = workouts?.find((w) => w.kind === "sesion" && w.date === today && !w.finished_at) ?? null;
+  const suggested = nextDayFromHistory(workouts ?? []);
 
   return (
     <div className="space-y-4">
@@ -109,16 +109,19 @@ export default function TrainPage() {
             <section>
               <h2 className="mb-2 text-sm font-medium text-muted">Sesiones recientes</h2>
               <ul className="card divide-y divide-line">
-                {workouts.slice(0, 10).map((w) => (
-                  <li key={w.id}>
-                    <Link href={`/train/${w.day_key}?w=${w.id}`} className="flex items-center gap-3 px-4 py-3">
-                      <span className="w-20 shrink-0 text-sm text-muted">{fmtDay(w.date)}</span>
-                      <span className="flex-1 truncate text-sm font-medium">{w.title}</span>
-                      {!w.finished_at && <span className="text-xs text-warn">sin terminar</span>}
-                      <ChevronRight className="size-4 text-muted" />
-                    </Link>
-                  </li>
-                ))}
+                {workouts
+                  .filter((w) => w.kind === "sesion")
+                  .slice(0, 10)
+                  .map((w) => (
+                    <li key={w.id}>
+                      <Link href={`/train/${w.day_key}?w=${w.id}`} className="flex items-center gap-3 px-4 py-3">
+                        <span className="w-20 shrink-0 text-sm text-muted">{fmtDay(w.date)}</span>
+                        <span className="flex-1 truncate text-sm font-medium">{w.title}</span>
+                        {!w.finished_at && <span className="text-xs text-warn">sin terminar</span>}
+                        <ChevronRight className="size-4 text-muted" />
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             </section>
           )}

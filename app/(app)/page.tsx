@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronRight, Dumbbell, Flame, Footprints, Plus, Scale, Utensils } from "lucide-react";
+import { ChevronRight, Dumbbell, Flame, Footprints, Moon, Plus, Scale, SkipForward, Undo2, Utensils } from "lucide-react";
 import { useApp } from "@/components/app-provider";
 import { MacroBar, Ring } from "@/components/charts";
 import { RunSheet } from "@/components/run-sheet";
@@ -10,7 +10,7 @@ import { WeightSheet } from "@/components/weight-sheet";
 import { fetchMeals, fetchRecentWorkouts, fetchRuns, fetchSetsForWorkouts, fetchWorkouts } from "@/lib/data";
 import { addDays, fmtDayLong, fmtDuration, fmtKg, fmtNum, fmtPace, fmtRelative, parseIso } from "@/lib/format";
 import { runCalories } from "@/lib/nutrition";
-import { dayByKey, nextDayKey } from "@/lib/routine";
+import { dayByKey, nextDayFromHistory, REST_DAY_KEY } from "@/lib/routine";
 import { volume } from "@/lib/strength";
 import type { Meal, Run, Workout, WorkoutSet } from "@/lib/types";
 
@@ -23,10 +23,12 @@ type TodayData = {
   weekRuns: Run[];
   weekMeals: Meal[];
   lastWorkout: Workout | null;
+  /** Historial reciente (de más nuevo a más antiguo) para decidir qué día toca. */
+  recent: Workout[];
 };
 
 export default function TodayPage() {
-  const { supabase, profile, today, targets, weightKg, weights, toast } = useApp();
+  const { supabase, userId, profile, today, targets, weightKg, weights, toast } = useApp();
   const [data, setData] = useState<TodayData | null>(null);
   const [sheet, setSheet] = useState<"run" | "weight" | null>(null);
 
@@ -37,7 +39,7 @@ export default function TodayPage() {
         fetchMeals(supabase, from, today),
         fetchWorkouts(supabase, from, today),
         fetchRuns(supabase, from, today),
-        fetchRecentWorkouts(supabase, 1),
+        fetchRecentWorkouts(supabase, 10),
       ]);
       const workouts = weekWorkouts.filter((w) => w.date === today);
       const sets = await fetchSetsForWorkouts(
@@ -52,7 +54,8 @@ export default function TodayPage() {
         weekWorkouts,
         weekRuns,
         weekMeals,
-        lastWorkout: recent[0] ?? null,
+        lastWorkout: recent.find((w) => w.kind === "sesion") ?? null,
+        recent,
       });
     } catch (e) {
       toast(`No se pudo cargar el día: ${(e as Error).message}`, "bad");
@@ -70,8 +73,29 @@ export default function TodayPage() {
   const target = targets.calories;
   const remaining = target != null ? target - eaten : null;
 
-  const todayWorkout = data?.workouts[0] ?? null;
-  const suggested = dayByKey(nextDayKey(data?.lastWorkout?.day_key ?? null));
+  const todaySession = data?.workouts.find((w) => w.kind === "sesion") ?? null;
+  const todayRest = data?.workouts.find((w) => w.kind === "descanso") ?? null;
+  const todaySkipped = data?.workouts.filter((w) => w.kind === "omitido") ?? [];
+  const suggested = dayByKey(nextDayFromHistory(data?.recent ?? []));
+
+  /** Anota hoy como descanso, o salta el día de la rutina que tocaba. */
+  async function markDay(kind: "descanso" | "omitido") {
+    if (!data) return;
+    const dayKey = kind === "descanso" ? REST_DAY_KEY : (suggested?.key ?? "d1");
+    const title = kind === "descanso" ? "Día de descanso" : (suggested?.title ?? "");
+    const { error } = await supabase
+      .from("workouts")
+      .insert({ user_id: userId, date: today, day_key: dayKey, kind, title, finished_at: new Date().toISOString() });
+    if (error) return toast(`No se pudo guardar: ${error.message}`, "bad");
+    toast(kind === "descanso" ? "Descanso anotado" : `Saltaste el ${suggested?.label ?? "día"}`);
+    load();
+  }
+
+  async function undoDay(w: Workout) {
+    const { error } = await supabase.from("workouts").delete().eq("id", w.id);
+    if (error) return toast(`No se pudo deshacer: ${error.message}`, "bad");
+    load();
+  }
   const doneSets = data?.sets.filter((s) => s.done) ?? [];
   const lastWeight = weights[0] ?? null;
 
@@ -133,36 +157,67 @@ export default function TodayPage() {
         <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted">
           <Dumbbell className="size-4" /> Pesas
         </div>
-        {todayWorkout ? (
-          <Link href={`/train/${todayWorkout.day_key}?w=${todayWorkout.id}`} className="flex items-center gap-3">
+        {todaySession ? (
+          <Link href={`/train/${todaySession.day_key}?w=${todaySession.id}`} className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="font-semibold">
-                {dayByKey(todayWorkout.day_key)?.label ?? "Sesión"} · {todayWorkout.title}
+                {dayByKey(todaySession.day_key)?.label ?? "Sesión"} · {todaySession.title}
               </p>
               <p className="text-sm text-muted">
                 {doneSets.length} series · {fmtNum(volume(doneSets))} kg movidos
-                {todayWorkout.finished_at ? " · terminado ✓" : " · en curso"}
+                {todaySession.finished_at ? " · terminado ✓" : " · en curso"}
               </p>
             </div>
             <ChevronRight className="size-5 text-muted" />
           </Link>
-        ) : suggested ? (
+        ) : todayRest ? (
           <div className="flex items-center gap-3">
+            <Moon className="size-5 text-muted" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm text-muted">Te toca</p>
-              <p className="font-semibold">
-                {suggested.label} · {suggested.title}
+              <p className="font-semibold">Día de descanso</p>
+              <p className="text-xs text-muted">
+                Mañana te toca {suggested?.label} · {suggested?.title}
               </p>
-              {data?.lastWorkout && (
-                <p className="text-xs text-muted">
-                  Última sesión: {dayByKey(data.lastWorkout.day_key)?.label ?? data.lastWorkout.title}{" "}
-                  {fmtRelative(data.lastWorkout.date, today)}
+            </div>
+            <button className="btn-ghost" onClick={() => undoDay(todayRest)}>
+              <Undo2 className="size-4" /> Deshacer
+            </button>
+          </div>
+        ) : suggested ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted">
+                  {todaySkipped.length ? `Saltaste el ${dayByKey(todaySkipped[0].day_key)?.label ?? "día"} · te toca` : "Te toca"}
                 </p>
+                <p className="font-semibold">
+                  {suggested.label} · {suggested.title}
+                </p>
+                {data?.lastWorkout && (
+                  <p className="text-xs text-muted">
+                    Última sesión: {dayByKey(data.lastWorkout.day_key)?.label ?? data.lastWorkout.title}{" "}
+                    {fmtRelative(data.lastWorkout.date, today)}
+                  </p>
+                )}
+              </div>
+              <Link href={`/train/${suggested.key}`} className="btn-primary px-4 py-2.5 text-sm">
+                Empezar
+              </Link>
+            </div>
+            <div className="flex gap-2">
+              <button className="btn-ghost flex-1 border border-line" onClick={() => markDay("omitido")}>
+                <SkipForward className="size-4" /> Saltar este día
+              </button>
+              {todaySkipped.length ? (
+                <button className="btn-ghost flex-1 border border-line" onClick={() => undoDay(todaySkipped[0])}>
+                  <Undo2 className="size-4" /> Deshacer salto
+                </button>
+              ) : (
+                <button className="btn-ghost flex-1 border border-line" onClick={() => markDay("descanso")}>
+                  <Moon className="size-4" /> Hoy descanso
+                </button>
               )}
             </div>
-            <Link href={`/train/${suggested.key}`} className="btn-primary px-4 py-2.5 text-sm">
-              Empezar
-            </Link>
           </div>
         ) : null}
         <Link href="/train" className="mt-3 block border-t border-line pt-3 text-sm text-accent">
@@ -236,7 +291,7 @@ function WeekStrip({ today, workouts, runs, meals }: { today: string; workouts: 
       <p className="mb-3 text-sm font-medium text-muted">Últimos 7 días</p>
       <div className="grid grid-cols-7 gap-1">
         {days.map((d) => {
-          const w = workouts.find((x) => x.date === d);
+          const w = workouts.find((x) => x.date === d && x.kind === "sesion") ?? workouts.find((x) => x.date === d);
           const r = runs.some((x) => x.date === d);
           const kcal = meals.filter((m) => m.date === d).reduce((s, m) => s + m.calories, 0);
           const isToday = d === today;
@@ -245,7 +300,13 @@ function WeekStrip({ today, workouts, runs, meals }: { today: string; workouts: 
               <span className={`text-[11px] ${isToday ? "font-bold text-accent" : "text-muted"}`}>{letters[parseIso(d).getDay()]}</span>
               <span className="text-xs tabular-nums">{parseIso(d).getDate()}</span>
               <div className="flex h-4 items-center gap-0.5">
-                {w && (
+                {w?.kind === "descanso" && <Moon className="size-3 text-muted" />}
+                {w?.kind === "omitido" && (
+                  <span className="rounded-full bg-line px-1 text-[9px] font-bold leading-4 text-muted line-through">
+                    {dayByKey(w.day_key)?.label.replace("Día ", "") ?? "·"}
+                  </span>
+                )}
+                {w?.kind === "sesion" && (
                   <span className="rounded-full bg-accent px-1 text-[9px] font-bold leading-4 text-accent-fg">
                     {dayByKey(w.day_key)?.label.replace("Día ", "") ?? "·"}
                   </span>
