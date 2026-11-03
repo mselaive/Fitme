@@ -8,7 +8,7 @@ import { MacroBar, Ring } from "@/components/charts";
 import { RunSheet } from "@/components/run-sheet";
 import { WeightSheet } from "@/components/weight-sheet";
 import { fetchMeals, fetchRecentWorkouts, fetchRuns, fetchSetsForWorkouts, fetchWorkouts } from "@/lib/data";
-import { addDays, fmtDayLong, fmtDuration, fmtKg, fmtNum, fmtPace, fmtRelative, parseIso } from "@/lib/format";
+import { addDays, fmtDay, fmtDayLong, fmtDuration, fmtKg, fmtNum, fmtPace, fmtRelative, parseIso } from "@/lib/format";
 import { runCalories } from "@/lib/nutrition";
 import { dayByKey, nextDayFromHistory, REST_DAY_KEY } from "@/lib/routine";
 import { volume } from "@/lib/strength";
@@ -77,6 +77,7 @@ export default function TodayPage() {
   const todayRest = data?.workouts.find((w) => w.kind === "descanso") ?? null;
   const todaySkipped = data?.workouts.filter((w) => w.kind === "omitido") ?? [];
   const suggested = dayByKey(nextDayFromHistory(data?.recent ?? []));
+  const unfinished = data?.recent.find((w) => w.kind === "sesion" && !w.finished_at && w.date !== today) ?? null;
 
   /** Anota hoy como descanso, o salta el día de la rutina que tocaba. */
   async function markDay(kind: "descanso" | "omitido") {
@@ -185,6 +186,15 @@ export default function TodayPage() {
           </div>
         ) : suggested ? (
           <div className="space-y-3">
+            {unfinished && (
+              <Link href={`/train/${unfinished.day_key}?w=${unfinished.id}`} className="flex items-center gap-3 rounded-xl bg-accent-soft px-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-accent">Sesión sin terminar · {fmtDay(unfinished.date)}</p>
+                  <p className="truncate text-sm font-semibold">{unfinished.title}</p>
+                </div>
+                <span className="text-sm font-semibold text-accent">Continuar</span>
+              </Link>
+            )}
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted">

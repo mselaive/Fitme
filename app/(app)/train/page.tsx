@@ -38,7 +38,8 @@ export default function TrainPage() {
     for (const w of workouts ?? []) if (w.kind === "sesion" && !map.has(w.day_key)) map.set(w.day_key, w);
     return map;
   }, [workouts]);
-  const inProgress = workouts?.find((w) => w.kind === "sesion" && w.date === today && !w.finished_at) ?? null;
+  // Cualquier sesión sin terminar (hoy o de días anteriores) se puede retomar.
+  const inProgress = workouts?.find((w) => w.kind === "sesion" && !w.finished_at) ?? null;
   const suggested = nextDayFromHistory(workouts ?? []);
 
   return (
@@ -58,7 +59,9 @@ export default function TrainPage() {
           {inProgress && (
             <Link href={`/train/${inProgress.day_key}?w=${inProgress.id}`} className="card flex items-center gap-3 border-accent bg-accent-soft p-4">
               <div className="flex-1">
-                <p className="text-xs font-medium text-accent">Sesión en curso</p>
+                <p className="text-xs font-medium text-accent">
+                  {inProgress.date === today ? "Sesión en curso" : `Sesión sin terminar · ${fmtDay(inProgress.date)}`}
+                </p>
                 <p className="font-semibold">{inProgress.title}</p>
               </div>
               <span className="btn-primary px-3 py-2 text-sm">Seguir</span>
